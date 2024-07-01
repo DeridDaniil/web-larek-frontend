@@ -43,6 +43,7 @@ yarn build
 
 Данные проекта.
 
+``` typescript
 // Интерфейс индивидуальных данных товара
 export interface IProduct {
   _id: number,
@@ -107,6 +108,7 @@ export interface IContactForm extends IModal {
   showInputError(fiel: string, errorMessage: string):void, 
   hideInputError(fiel: string):void, 
   clearModal(modal: HTMLElement):void
+```
 
 Описание проекта.
 
