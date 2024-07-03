@@ -54,60 +54,128 @@ export interface IProduct {
   description: string
 }
 
+// Тип данных товара в корзине
+export type TProductBasket = Pick<IProduct,  'title' | 'price'>;
+
 // Интерфейс списка товаров
 export interface IProductList {
   product: IProduct[],
   getProduct(_id: number): IProduct[];
 }
 
-// Интерфейс главной страницы веб-приложения
+//Форма способа оплаты и адреса
+export interface IFormPayment {
+  address: string;
+  payment: string;
+}
+
+//Форма контактных данных пользователя
+export interface IFormContact {
+  email: string;
+  phone: string;
+}
+
+//Проверка валидации формы оплаты и адреса
+export interface IFormPaymentValidate {
+  checkValidation(data: Record<keyof IFormPayment, string>): boolean;
+}
+
+//Проверка валидации формы контактных данных
+export interface IFormContactValidate {
+  checkValidation(data: Record<keyof IFormContact, string>): boolean;
+}
+
+//Информация о заказе
+export interface IFormOrder {
+  items: string[];
+  total: number;
+}
+
+// Интерфейс класса Component
+export interface IComponent {
+  setText(selector: string, text: string): void;
+  setImage(selector: string, src: string): void;
+  setClass(selector: string, className: string): void;
+  render(): void;
+}
+
+// Интерфейс класса AppState
+export interface IAppState {
+  catalog: IProduct[];
+  basket: TProductBasket[];
+  formErrors: Record<keyof IFormPayment | keyof IFormContact, string>;
+  order: IFormOrder;
+
+  setCatalog(catalog: IProduct[]): void;
+  setPreview(product: IProduct): void;
+  checkBasket(productId: string): boolean;
+  addItemToBasket(item: TProductBasket): void;
+  checkValidation(form: IFormPayment | IFormContact): boolean;
+  removeItemFromBasket(itemId: string): void;
+  clearBasket(): void;
+}
+
+// Интерфейс класса Page
 export interface IPage {
-  counter: number,
-  catalog: HTMLElement[]
+  _catalog: HTMLElement;
+  _counter: HTMLElement;
+  _basket: HTMLElement;
+
+  setCounter(value: number): void;
+  setCatalog(items: IProduct[]): void;
 }
 
-// Интрефейс базовых методов модального окна
-export interface IModal {
-  modal: HTMLElement,
-  events: IEvents,
-  openModal(modal: HTMLElement):void
-  closeModal(modal: HTMLElement):void
+// Интерфейс класса Modal
+export interface IModal extends IComponent {
+  _closeButton: HTMLElement;
+  _content: HTMLElement;
+
+  setContent(content: HTMLElement): void;
+  openModal(): void;
+  closeModal(): void;
 }
 
-// Интейрфейс модального окна корзины
-export interface IBusketForm extends IModal{
-  submitButton: HTMLButtonElement,
-  _form: HTMLFormElement,
-  formName: string,
-  productList: HTMLElement[],
-  totalPrice: number | null
+// Интерфейс класса Basket
+export interface IBasket {
+  _itemsList: HTMLElement;
+  _totalPrice: HTMLElement;
+  _button: HTMLElement;
+
+  setItemsList(items: HTMLElement[]): void;
+  setTotalPrice(total: number): void;
 }
 
-// Интерфейс формы с выбором оплаты и адреса
-export interface IPaymentForm extends IModal {
-  submitButton: HTMLButtonElement,
-  _form: HTMLFormElement,
-  formName: string,
-  paymentbutton: HTMLButtonElement,
-  inputs: HTMLInputElement,
-  errors: Record<string, HTMLElement>
-  setError(data: {field: string, value: string, validInformation: string}): void,
-  showInputError(fiel: string, errorMessage: string):void, 
-  hideInputError(fiel: string):void, 
-  clearModal(modal: HTMLElement):void
+// Интерфейс класса Form
+export interface IForm {
+  _submit: HTMLElement;
+  _error: HTMLElement;
+
+  setSubmit(isEnabled: boolean): void;
+  setError(errorMessage: string): void;
+  render(): void;
 }
 
-// Интрейфейс формы почты и телефона
-export interface IContactForm extends IModal {
-  submitButton: HTMLButtonElement,
-  _form: HTMLFormElement,
-  formName: string,
-  inputs: HTMLInputElement,
-  errors: Record<string, HTMLElement>
-  setError(data: {field: string, value: string, validInformation: string}): void,
-  showInputError(fiel: string, errorMessage: string):void, 
-  hideInputError(fiel: string):void, 
-  clearModal(modal: HTMLElement):void
+// Интерфейс класса PaymentForm
+export interface IPaymentForm extends IForm {
+  _online: HTMLElement;
+  _cash: HTMLElement;
+
+  setPayment(method: 'online' | 'cash'): void;
+  setAddress(address: string): void;
+}
+
+// Интерфейс класса ContactForm
+export interface IContactForm extends IForm {
+  setPhone(phoneNumber: string): void;
+  setEmail(email: string): void;
+}
+
+// Интерфейс класса PaymentSuccess
+export interface IPaymentSuccess {
+  _totalPrice: HTMLElement;
+
+  setTotalPrice(total: number): void;
+}
 ```
 
 Описание проекта.
@@ -126,6 +194,13 @@ export interface IContactForm extends IModal {
 - Метод ofAll() - сбрасывает все обработчики.
 - Метод trigger() - делает коллбек триггер, генерирующий событие при вызове.
 
+Класс Component абстрактный класс, реализован для управления разметкой и создания компонентов пользовательского интерфейса.  
+Методы класса:
+- setText() - изменение текста.
+- setImage() - изменение изображения.
+- setClass() - изменение стилей.
+- render() - рендер разметки.
+
 Класс Product отвечает за хранение и логику работы с данными товара. Конструктор принимает брокер событий.  
 Свойства класса хранят данные:
 - _id - уникальный номер товара.
@@ -135,86 +210,101 @@ export interface IContactForm extends IModal {
 - price - цена товара.
 - description - описание товара.
 
-Класс Page реализует отображение массива товаров и корзину с количеством товара.  
-Свойство класса:
-- counter - счетчик товаров в корзине.
-- catalog - массив товаров.
+Класс AppState предназначен для работы с данными.  
+Свойства класса: 
+- catalog - каталог товаров.
+- basket - корзина.
+- formErrors - ошибки ввода формы.
+- order - информация о заказе.
+  
+Методы класса:
+- setCatalog() - получение списка товаров из сервера.
+- setPreview() - открытие товара в модальном окне.
+- checkBasket() - проверка наличия товара в корзине.
+- addItemToBasket() - добавляет товар в корзину.
+- checkValidation() - проверяет валидность в форме.
+- removeItemFromBasket() - удаляет товар из корзины.
+- clearBaske()t - очищает корзину.
 
-Класс Modal реализует модальные окна.  
+Класс Page предназначен для управления основными элементами интерфейса страницы.  
 Свойства класса:
-- modal - элемент модального окна
-- events - брокер событий
-- Методы класса:
-- openModal() - открывает модальное окно.
-- closeModal() - закрывает модальное окно.
+- catalog - каталог товаров.
+- counter - счетчик количества добавленных товаров в корзину.
+- basket - корзина
+  
+Методы класса: 
+- setCounter() - устанавливает значение счетчика.
+- setCatalog() - обновляет каталог.
 
-Класс BusketForm реализует модальное окно с формой, которая содержит выбранные товары. При отправке формы запускается событие проверки данных.  
+Класс Modal предназначен для реализации модальных окон.  
 Свойства класса:
-- наследует свойства класса Modal.
+- наследует свойства класса Component
+- closeButton - кнопка закрытия модального окна.
+- content - контент, отображаемый внутри модального окна
+  
+Методы класса:
+- наследует свойства класса Component
+- setContent() - заполнение контента модального окна.
+- openModal() - открытие модального окна.
+- closeModal() - закрытие модального окна.
+
+Класс Basket предназначен для управления функциональностью корзины.  
+Свойства класса: 
+- itemList - список добавленных товаров в корзину.
+- totalPrice - общая стоимость корзины.
+- orderButton - кнопка оформления заказа.
+  
+Методы класса:
+- setItemsList() - обновляет список добавленных в корзину товаров.
+- setTotalPrice() - обновляет общую стоимость корзины.
+
+Класс Form предназначен для управления формой.  
+Свойства класса:
 - submitButton - кнопка отправки формы.
-- _form - элемент формы.
-- formName - значение атрибута name формы.
-- productList - список выбранных товаров.
-- totalPrice - общая цена товаров для оплаты.
+- error - сообщение об ошибке.
   
-Методы класса:
-- наследует методы класса Modal.
-- deleteProduct() - удаление товара из списка корзины.
+Методы класса: 
+- setSubmit() - включает или выключает кнопку подтверждения формы.
+- setError() - отображает ошибки валидации.
+- render() - отрисовывает форму.
 
-Класс PaymentForm реализует модальное окно с формой, которая содержит выбор способа оплаты и поле ввода адреса доставки. При отправке формы запускается событие проверки данных.  
+Класс PaymentForm предназначен для управления формы способа оплаты и адреса доставки.  
 Свойства класса:
-- наследует свойства класса Modal.
-- submitButton - кнопка отправки формы.
-- _form - элемент формы.
-- formName - значение атрибута name формы.
-- paymentButton - кнопка выбора способа оплаты.
-- inputs - все поля ввода формы.
-- errors - объект, который хранит в себе ошибки валидации для инпутов.
+- наследует свойства класса Form
+- online - кнопка оплаты онлайн.
+- cash - кнопка оплаты при получении.
   
 Методы класса:
-- наследует методы класса Modal.
-- setError() - принимает объект с данными об ошибках.
-- showInputError() - отоброжает полученные ошибки.
-- hideInputError() - скрывает ошибки.
-- clearModal() - очищает поля ввода.
+- setPayment() - переключение кнопок способов оплаты.
+- setAddress() - устанавливает адрес доставки.
 
-Класс ContactForm реализует модальное окно с формой, которая содержит поля ввода электронного адреса и номера телефона. При отправке формы запускается событие проверки данных и переходит на модальное окно с уведомлением об успешном оформлении заказа.  
+Класс ContactForm предназначен для управления формы с номером телефона и электронной почтой.  
 Свойства класса:
-- наследует свойства класса Modal.
-- submitButton - кнопка отправки формы.
-- _form - элемент формы.
-- formName - значение атрибута name формы.
-- inputs - все поля ввода формы.
-- errors - объект, который хранит в себе ошибки валидации для инпутов.
+- наследует свойства класса Form
   
-Методы класса:
-- наследует методы класса Modal.
-- setError() - принимает объект с данными об ошибках.
-- showInputError() - отоброжает полученные ошибки.
-- hideInputError() - скрывает ошибки.
-- clearModal() - очищает поля ввода.
+Методы класса: 
+- setPhone() - устанавливает номер телефона.
+- setEmail() - устанавливает адрес электронной почты.
 
-Класс OrderModal реализует модальное окно с формой, содержащей сообщение об успешном оформлении заказа, в которое передается полная стоимость корзины.  
+Класс PaymentSuccess предназначен для показа модального окна с сообщение об удачном совершении операции оплаты.  
 Свойства класса:
-- наследует свойства класса Modal.
+- totalPrice - общая стоимость корзины.
   
-Методы класса:
-- наследует методы класса Modal.
+Методы класса: 
+- setTotalPrice() - обновляет общую стоимость корзины.
 
-Взаимодействие между компонентами происходит за счет событий, генерируемых при помощи брокера событий и их обработчиков.  
 Список событий:
-- products:changed - изменение массива товаров.
-- products:selected - при клике на товар, открывается модальное окно с товаром. Дает возможность добавить товар в корзину.
-- busket:open - открывает модальное окно корзины.
-- busket:toggleItem - добавление товара в корзину.
-- busket:deleteItem - удаление товара из корзины.
-- busket:order - оформление заказа в корзине.
-- payment:change - выбор способа оплаты.
-- address:input - ввод адреса доставки.
-- order:validation - событие, для валидации формы данных об оплате и адреса доставке.
-- order:submit - подтверждение данных об оплате и адреса доставке.
-- email:input - ввод электронной почты.
-- phone:input - ввод номера телефона.
-- contact:validation - событие, для валидации формы данных электронной почты и номера телефона.
-- contact:submit - подтверждение данных электронной почты и номера телефона.
-- order:complete - открытие окна успешной оплаты.
+- product:change - изменение массива товаров.
+- basket:open - открытие модального окна корзины.
+- basket:change - изменение товаров в корзине.
+- basket:close - закрытие модального окна корзины.
+- preview:change - изменение модального окна превью товаров.
+- modal:open - открытие модального окна.
+- modal:close - закрытие модального окна.
+- product:add - добавление товара в корзины.
+- product:delete - удаление товара из корзины.
+- order:submit - сохранение данных о способе оплаты и адреса доставки.
+- contacts:submit - событие отправки товара на оплату.
+- order: complete - при открытии модального окна успешной оплаты.
+- order:validation - валидация формы с вводом адреса доставки и способе оплаты.
+- contacts:validation - валидация формы с номером телефона и алресом электронной почты.
