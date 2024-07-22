@@ -44,137 +44,40 @@ yarn build
 Данные проекта.
 
 ``` typescript
-// Интерфейс индивидуальных данных товара
 export interface IProduct {
-  _id: number,
-  title: string,
+  id: string,
   category: string,
+  title: string,
   image: string,
-  price: number | null,
-  description: string
+  price: number | null;
+  description: string,
+  buttonText: string;
+  index: string;
 }
 
-// Тип данных товара в корзине
-export type TProductBasket = Pick<IProduct,  'title' | 'price'>;
+export type TBasketProduct = Pick<IProduct, 'title' | 'price'>;
 
-// Интерфейс списка товаров
-export interface IProductList {
-  product: IProduct[],
-  getProduct(_id: number): IProduct[];
-}
-
-//Форма способа оплаты и адреса
-export interface IFormPayment {
+export interface IPayment {
   address: string;
   payment: string;
 }
 
-//Форма контактных данных пользователя
-export interface IFormContact {
+export interface IContact {
   email: string;
   phone: string;
 }
 
-//Проверка валидации формы оплаты и адреса
-export interface IFormPaymentValidate {
-  checkValidation(data: Record<keyof IFormPayment, string>): boolean;
-}
+export type FormErrors = Partial<Record<keyof IOrder, string>>;
 
-//Проверка валидации формы контактных данных
-export interface IFormContactValidate {
-  checkValidation(data: Record<keyof IFormContact, string>): boolean;
-}
-
-//Информация о заказе
-export interface IFormOrder {
-  items: string[];
+export interface IOrder extends IPayment, IContact {
+  items: string[],
   total: number;
 }
 
-// Интерфейс класса Component
-export interface IComponent {
-  setText(selector: string, text: string): void;
-  setImage(selector: string, src: string): void;
-  setClass(selector: string, className: string): void;
-  render(): void;
-}
-
-// Интерфейс класса AppState
-export interface IAppState {
-  catalog: IProduct[];
-  basket: TProductBasket[];
-  formErrors: Record<keyof IFormPayment | keyof IFormContact, string>;
-  order: IFormOrder;
-
-  setCatalog(catalog: IProduct[]): void;
-  setPreview(product: IProduct): void;
-  checkBasket(productId: string): boolean;
-  addItemToBasket(item: TProductBasket): void;
-  checkValidation(form: IFormPayment | IFormContact): boolean;
-  removeItemFromBasket(itemId: string): void;
-  clearBasket(): void;
-}
-
-// Интерфейс класса Page
-export interface IPage {
-  _catalog: HTMLElement;
-  _counter: HTMLElement;
-  _basket: HTMLElement;
-
-  setCounter(value: number): void;
-  setCatalog(items: IProduct[]): void;
-}
-
-// Интерфейс класса Modal
-export interface IModal extends IComponent {
-  _closeButton: HTMLElement;
-  _content: HTMLElement;
-
-  setContent(content: HTMLElement): void;
-  openModal(): void;
-  closeModal(): void;
-}
-
-// Интерфейс класса Basket
-export interface IBasket {
-  _itemsList: HTMLElement;
-  _totalPrice: HTMLElement;
-  _button: HTMLElement;
-
-  setItemsList(items: HTMLElement[]): void;
-  setTotalPrice(total: number): void;
-}
-
-// Интерфейс класса Form
-export interface IForm {
-  _submit: HTMLElement;
-  _error: HTMLElement;
-
-  setSubmit(isEnabled: boolean): void;
-  setError(errorMessage: string): void;
-  render(): void;
-}
-
-// Интерфейс класса PaymentForm
-export interface IPaymentForm extends IForm {
-  _online: HTMLElement;
-  _cash: HTMLElement;
-
-  setPayment(method: 'online' | 'cash'): void;
-  setAddress(address: string): void;
-}
-
-// Интерфейс класса ContactForm
-export interface IContactForm extends IForm {
-  setPhone(phoneNumber: string): void;
-  setEmail(email: string): void;
-}
-
-// Интерфейс класса PaymentSuccess
-export interface IPaymentSuccess {
-  _totalPrice: HTMLElement;
-
-  setTotalPrice(total: number): void;
+export interface IOrderResult {
+  id: string,
+  items: string[],
+  total: number;
 }
 ```
 
@@ -196,115 +99,159 @@ export interface IPaymentSuccess {
 
 Класс Component абстрактный класс, реализован для управления разметкой и создания компонентов пользовательского интерфейса.  
 Методы класса:
-- setText() - изменение текста.
-- setImage() - изменение изображения.
-- setClass() - изменение стилей.
-- render() - рендер разметки.
+- toggleClass() - переключает класс элемента.
+- setText() - устанавливает текстовое содержимое элемента.
+- setDisabled() - устанавливает состояние отключения элемента.
+- setHidden() - скрывает элемент.
+- setVisible() - показывает элемент
+- setImage() - устанавливает источник и альтернативный текст для изображения.
+- render() - отрисовывает компонент, при необходимости обновляя его данные.
 
-Класс Product отвечает за хранение и логику работы с данными товара. Конструктор принимает брокер событий.  
-Свойства класса хранят данные:
-- _id - уникальный номер товара.
-- title - наименование товара.
-- category - категория товара.
-- image - изображение товара.
-- price - цена товара.
-- description - описание товара.
+Класс Model абстрактный класс для управления данными и событиями в приложении.  
+Методы класса:
+- emitChanges() - генерирует событие с указанным именем и полезной нагрузкой.
 
-Класс AppState предназначен для работы с данными.  
+Класс ProductApi расширяет базовый класс Api и предназначен для работы с API товаров.  
+Свойства класса:
+- cdn - URL для загрузки изображений продукта.
+  
+Методы класса:
+- getCatalog() - получает список всех продуктов из каталога.
+- postOrder() - отправляет данные о заказе на сервер. 
+
+Класс Card расширяет базовый класс Component и отвечает за хранение и логику работы с данными товара. Конструктор принимает брокер событий.  
+Свойства класса:
+- _category - категория товара.
+- _title - название товара.
+- _image - изображение товара.
+- _price - цена продукта.
+- _description - описание товара.
+- _buttonText - текст кнопки.
+- _index - индекс товара в корзине
+- _button - кнопка, для взаимодействия с карточкой товара.
+  
+Методы класса:
+- set id() - устанавливает id карточки.
+- get id() - возвращает id карточки.
+- set title() - устанавливает название товара.
+- get title() - возвращает название товара.
+- set image() - устанавливает изображение товара.
+- set price() - устанавливает цену товара.
+- set description() - устанавливает описание товара.
+- set index() - устанавливает индекс товара в корзине.
+- get index() - возвращает индекс товара в корзине.
+- set category() - устанавливает категорию товара.
+- get category() - возвращает категорию товара.
+- set buttonText() - устанавливает текст кнопки.
+- buttonDisabled() - устанавливает состояние отключения кнопки
+
+Класс AppState расширяет базовый класс Model и предназначен для управления состоянием приложения.  
 Свойства класса: 
 - catalog - каталог товаров.
-- basket - корзина.
-- formErrors - ошибки ввода формы.
-- order - информация о заказе.
+- basket - корзина с товарами.
+- order - текущий заказ.
+- preview - предпросмотр товара.
+- events - события, которые могут быть вызваны для обработки изменений состояия.
+- formErrors - ошибки формы, используемые для валидации данных заказа.
   
 Методы класса:
-- setCatalog() - получение списка товаров из сервера.
-- setPreview() - открытие товара в модальном окне.
-- checkBasket() - проверка наличия товара в корзине.
-- addItemToBasket() - добавляет товар в корзину.
-- checkValidation() - проверяет валидность в форме.
-- removeItemFromBasket() - удаляет товар из корзины.
-- clearBaske()t - очищает корзину.
+- setCatalog() - устанавливает каталог товаров.
+- setPreview() - устанавливает товар для предпросмотра.
+- addBasketProduct() - добавляет товар в корзину.
+- removeBasketProduct() - удаляет товар из корзины.
+- clearBasket() - очищает корзину.
+- updateBasket() - обновляет состояние корзины.
+- setPayment() - устанавливает значения поля для формы данных об оплате.
+- setContact() - устанавливает значения поля для формы данных пользователя.
+- clearOrder() - очищает информацию о текущем заказе.
+- PaymentValidate() - валидирует форму данных об оплате.
+- ContactValidate() - валидирует форму данных пользователя.
 
-Класс Page предназначен для управления основными элементами интерфейса страницы.  
+Класс Page расширяет базовый класс Component и предназначен для управления основными элементами страницы приложения.  
 Свойства класса:
-- catalog - каталог товаров.
-- counter - счетчик количества добавленных товаров в корзину.
-- basket - корзина
+- _counter - счетчик товаров в корзине.
+- _catalog - каталог товаров.
+- _wrapper - обертка страницы.
+- _basket - кпнока корзины.
   
 Методы класса: 
-- setCounter() - устанавливает значение счетчика.
-- setCatalog() - обновляет каталог.
+- set counter() - устанавливает значение счетчика товаров в корзине.
+- set catalog() - устанавливает элементы каталога товаров.
+- set isLocked() - устанавливает состояние блокировки страницы.
 
-Класс Modal предназначен для реализации модальных окон.  
+Класс Modal расширяет базовый класс Component и предназначен для управления модальными окнами в приложении.  
 Свойства класса:
-- наследует свойства класса Component
-- closeButton - кнопка закрытия модального окна.
-- content - контент, отображаемый внутри модального окна
+- _closeButton - кнопка закрытия модального окна.
+- _content - содержимое модального окна
   
 Методы класса:
-- наследует свойства класса Component
-- setContent() - заполнение контента модального окна.
-- openModal() - открытие модального окна.
-- closeModal() - закрытие модального окна.
+- set content() - устанавливает содержимое модального окна.
+- open() - открывает модальное окно.
+- close() - закрывает модальное окно.
+- render() - рендерит данные модального окна и открывает его.
 
-Класс Basket предназначен для управления функциональностью корзины.  
+Класс Basket расширяет базовый класс Component и предназначен для управления корзиной в приложении.  
 Свойства класса: 
-- itemList - список добавленных товаров в корзину.
-- totalPrice - общая стоимость корзины.
-- orderButton - кнопка оформления заказа.
+- _list - список товаров в корзине.
+- _price - общая цена товаров в корзине.
+- _button - кнопка для оформления заказа.
   
 Методы класса:
-- setItemsList() - обновляет список добавленных в корзину товаров.
-- setTotalPrice() - обновляет общую стоимость корзины.
+- set list() - устанавливает элементы списка товаров в корзине.
+- set selected() - устанавливает состояние кнопки оформления заказа.
+- set price() - устанавливает общую цену товаров  в корзине.
 
-Класс Form предназначен для управления формой.  
+Класс Form расширяет базовый класс Component и предназначен для управления формами в приложении.  
 Свойства класса:
-- submitButton - кнопка отправки формы.
-- error - сообщение об ошибке.
+- _submit - кнопка отправки формы.
+- _errors - отображение ошибок формы.
   
 Методы класса: 
-- setSubmit() - включает или выключает кнопку подтверждения формы.
-- setError() - отображает ошибки валидации.
-- render() - отрисовывает форму.
+- protected onInputChange() - обрабатывает изменения ввода в форме и генерирует события.
+- set valid() - устанавливает состояние валидности формы.
+- set errors() - устанавливает сообщение об ошибки в форме.
+- render() - рендерит состояние формы.
 
-Класс PaymentForm предназначен для управления формы способа оплаты и адреса доставки.  
+Класс Payment расширяет класс Form и предназначен для управления формой данных об оплате в приложении.  
 Свойства класса:
-- наследует свойства класса Form
-- online - кнопка оплаты онлайн.
-- cash - кнопка оплаты при получении.
+- _card - кнопка выбора оплаты онлайн.
+- _cash - кнопка выбора оплаты при получении.
   
 Методы класса:
-- setPayment() - переключение кнопок способов оплаты.
-- setAddress() - устанавливает адрес доставки.
+- toggleButton() - переключает активное состояние кнопок выбора метода оплаты.
+- set address() - устанавливает значения поля адреса доставки в форме.
 
-Класс ContactForm предназначен для управления формы с номером телефона и электронной почтой.  
+Класс Contact расширяет класс Form и предназначен для управления формой данных пользователя в приложении.  
+Методы класса: 
+- set email() - устанавливает значение поля электронной почты в форме.
+- set phone() - устанавливает значение поле номера телефона в форме.
+
+Класс Success расширяет базовый класс Component и предназначен для отображения модального окна успешного заказа в приложении.  
 Свойства класса:
-- наследует свойства класса Form
+- _close - кнопка закрытия уведомления об успешном заказе.
+- _totalPrice - общая цена заказа.
   
 Методы класса: 
-- setPhone() - устанавливает номер телефона.
-- setEmail() - устанавливает адрес электронной почты.
-
-Класс PaymentSuccess предназначен для показа модального окна с сообщение об удачном совершении операции оплаты.  
-Свойства класса:
-- totalPrice - общая стоимость корзины.
-  
-Методы класса: 
-- setTotalPrice() - обновляет общую стоимость корзины.
+- set totalPrice() - устанаваливает текстовое содержимое элемента общей цены заказа.
 
 Список событий:
-- product:change - изменение массива товаров.
+- payment:toggle - переключение кнопки способа оплаты.
+- product:change - изменение каталога.
+- preview:select - добавления открытия модального окна для каждой карточки товара.
+- preview:change - открытие модального окна карточки товара.
+- product:toggle - переключение кнопки в модальном окне карточки товара.
+- card:add - добавление товара в корзину.
+- card:delete - удаление товара из корзины.
+- basket:change - изменения в корзине.
+- counter:change - изменение счетчика корзины.
 - basket:open - открытие модального окна корзины.
-- basket:change - изменение товаров в корзине.
-- basket:close - закрытие модального окна корзины.
-- preview:change - изменение модального окна превью товаров.
-- modal:open - открытие модального окна.
-- modal:close - закрытие модального окна.
-- product:add - добавление товара в корзины.
-- product:delete - удаление товара из корзины.
-- order:submit - сохранение данных о способе оплаты и адреса доставки.
-- contacts:submit - событие отправки товара на оплату.
-- order: complete - при открытии модального окна успешной оплаты.
-- order:validation - валидация формы с вводом адреса доставки и способе оплаты.
-- contacts:validation - валидация формы с номером телефона и алресом электронной почты.
+- payment:open - открытие модального окна с формой данных об оплате.
+- formErrors:change - отслеживание ошибок валидации.
+- ^order\..*:change - ошибки валидации в форме данных об оплате.
+- ^contacts\..*:change - ошибки валидации в форме данных пользователя.
+- order:validation - валидация формы данных об оплате.
+- contacts:validation - валидация формы данных пользователя.
+- order:submit - открытие формы данных пользователя.
+- contacts:submit - открытие модального окна об успешном оплате заказа.
+- modal:open - блокировка страницы, когда открыто модальное окно.
+- modal:close - отмена блокировки страницы, когда открыто модальное окно.
