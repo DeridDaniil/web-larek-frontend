@@ -36,7 +36,7 @@ const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events);
 const basket = new Basket(cloneTemplate(basketTemplate), events);
 const orderContact = new Contact(cloneTemplate(contactTemplate), events);
 const orderPayment = new Payment(cloneTemplate(paymentTemplate), events, {
-  onClick: (event: Event) => events.emit('payment:toggle', event.target)
+  onClick: (event: Event) => events.emit('order:toggle', event.target)
 });
 
 // Получения каталога
@@ -138,10 +138,10 @@ events.on('basket:open', () => {
 })
 
 // Открытие модального окна с данными об оплате.
-events.on('payment:open', () => {
+events.on('order:open', () => {
   modal.render({
     content: orderPayment.render({
-      payment: '',
+      payment: 'card',
       address: '',
       valid: false,
       errors: [],
@@ -151,7 +151,7 @@ events.on('payment:open', () => {
 })
 
 // Отслеживание изменений в форме с данными об оплате.
-events.on('payment:toggle', (target: HTMLElement) => {
+events.on('order:toggle', (target: HTMLElement) => {
   if (!target.classList.contains('.button_alt-active')) {
     orderPayment.toggleButton(target);
     appData.order.payment = target.getAttribute('name');
@@ -230,4 +230,5 @@ events.on('modal:open', () => {
 // Отмена блокировки
 events.on('modal:close', () => {
   page.isLocked = false;
+  appData.updateOrder();
 })

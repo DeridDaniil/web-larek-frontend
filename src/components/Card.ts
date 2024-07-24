@@ -87,6 +87,7 @@ export class Card<T> extends Component<IProduct> {
 
   set category(value: string) {
     this.setText(this._category, value);
+    this._category.classList.remove('card__category_other');
     this._category.classList.add(CategoryClasses[value]);
   }
 

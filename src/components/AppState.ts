@@ -20,7 +20,7 @@ export class AppState extends Model<IAppState> {
   catalog: IProduct[];
   basket: IProduct[] = [];
   order: IOrder = {
-    payment: '',
+    payment: 'card',
     address: '',
     email: '',
     phone: '',
@@ -81,13 +81,20 @@ export class AppState extends Model<IAppState> {
 
   clearOrder() {
     this.order = {
-      payment: '',
+      payment: 'card',
       address: '',
       email: '',
       phone: '',
       items: [],
       total: 0
     };
+  }
+
+  updateOrder() {
+    this.order.payment = 'card';
+    this.order.address = '';
+    this.order.email = '';
+    this.order.phone = '';
   }
 
   PaymentValidate() {
